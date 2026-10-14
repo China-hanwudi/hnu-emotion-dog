@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 $devRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $devPythonRoot = Join-Path $devRoot '02_运行环境\python'
 $devVenv = Join-Path $devRoot '02_运行环境\venv'
@@ -11,5 +11,13 @@ uv pip install --python (Join-Path $devVenv 'Scripts\python.exe') -r (Join-Path 
 if ($LASTEXITCODE -ne 0) { throw '依赖安装失败' }
 if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot '.env'))) { Copy-Item -LiteralPath (Join-Path $PSScriptRoot '.env.example') -Destination (Join-Path $PSScriptRoot '.env') }
 & (Join-Path $devVenv 'Scripts\python.exe') (Join-Path $PSScriptRoot 'download_assets.py') speech
+if ($LASTEXITCODE -ne 0) { throw '语音模型下载未完成' }
 & (Join-Path $devVenv 'Scripts\python.exe') (Join-Path $PSScriptRoot 'download_assets.py') ollama
+if ($LASTEXITCODE -ne 0) { throw 'Ollama 下载未完成' }
+& (Join-Path $devVenv 'Scripts\python.exe') (Join-Path $PSScriptRoot 'download_assets.py') aria2
+if ($LASTEXITCODE -ne 0) { throw '分段下载工具安装未完成' }
+& (Join-Path $devVenv 'Scripts\python.exe') (Join-Path $PSScriptRoot 'download_assets.py') model
+if ($LASTEXITCODE -ne 0) { throw '本地多模态模型下载未完成' }
+
+
 

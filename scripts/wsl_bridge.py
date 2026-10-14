@@ -105,8 +105,6 @@ def windows_server(host,proxy_port):
     ThreadingHTTPServer((host,11435),WindowsModelHandler).serve_forever()
 
 def linux_server(windows_host, proxy_port):
-    subprocess.run(['systemctl','start','docker'],check=True,timeout=45)
-    bridge_ip=subprocess.check_output(['docker','network','inspect','bridge','--format','{{(index .IPAM.Config 0).Gateway}}'],text=True,timeout=20).strip()
     token=bridge_token()
     class ProxyHandler(socketserver.BaseRequestHandler):
         def handle(self):
@@ -123,6 +121,17 @@ def linux_server(windows_host, proxy_port):
         daemon_threads=True
     server=ProxyServer(('127.0.0.1',17897),ProxyHandler)
     threading.Thread(target=server.serve_forever,daemon=True).start()
+    config = Path('/etc/systemd/system/docker.service.d/emotion-dog-proxy.conf')
+    content = ('[Service]\nEnvironment="HTTP_PROXY=http://127.0.0.1:17897" '
+               '"HTTPS_PROXY=http://127.0.0.1:17897" '
+               '"NO_PROXY=localhost,127.0.0.1,::1"\n')
+    changed = not config.exists() or config.read_text() != content
+    if changed:
+        config.parent.mkdir(parents=True, exist_ok=True)
+        config.write_text(content)
+        subprocess.run(['systemctl','daemon-reload'],check=True,timeout=30)
+    subprocess.run(['systemctl','restart' if changed else 'start','docker'],check=True,timeout=120)
+    bridge_ip=subprocess.check_output(['docker','network','inspect','bridge','--format','{{(index .IPAM.Config 0).Gateway}}'],text=True,timeout=20).strip()
     class ModelHandler(BaseHTTPRequestHandler):
         def log_message(self,*args):pass
         def process(self):

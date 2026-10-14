@@ -9,7 +9,7 @@ project=Path(__file__).resolve().parents[1]
 build_code='''import json
 def main(query: str, audio_emotion: str = "unknown") -> dict:
     system = %r
-    payload = {"model":"qwen3.5:4b","messages":[{"role":"system","content":system},{"role":"user","content":"用户原话："+query+"\\n语音情绪："+audio_emotion}],"stream":False,"think":False,"format":"json","options":{"num_ctx":4096,"num_predict":300,"temperature":0.3}}
+    payload = {"model":"qwen3.5:4b","messages":[{"role":"system","content":system},{"role":"user","content":"用户原话："+query+"\\n语音情绪："+(audio_emotion or "unknown")}],"stream":False,"think":False,"format":"json","options":{"num_ctx":4096,"num_predict":300,"temperature":0.3}}
     return {"payload":json.dumps(payload,ensure_ascii=False)}
 ''' % SYSTEM
 parse_code='''import json

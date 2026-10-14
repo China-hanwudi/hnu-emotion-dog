@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 $devProject = $PSScriptRoot
 $devRoot = Split-Path (Split-Path $devProject -Parent) -Parent
 $devPython = Join-Path $devRoot '02_运行环境\venv\Scripts\python.exe'
@@ -29,4 +29,6 @@ for ($devAttempt=0; $devAttempt -lt 30; $devAttempt++) {
     try { Invoke-RestMethod 'http://127.0.0.1:8765/api/health' -TimeoutSec 2 | Out-Null; Start-Process 'http://127.0.0.1:8765'; exit 0 } catch { Start-Sleep -Seconds 1 }
 }
 throw '服务未启动，请检查 05_日志中的 app.stderr.log'
+
+
 
