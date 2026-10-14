@@ -1,0 +1,18 @@
+services:
+  db_postgres:
+    volumes: !override
+      - emotion_dog_postgres:/var/lib/postgresql/data
+  redis:
+    volumes: !override
+      - emotion_dog_redis:/data
+  weaviate:
+    volumes: !override
+      - emotion_dog_weaviate:/var/lib/weaviate
+  nginx:
+    ports: !override
+      - "127.0.0.1:8080:80"
+volumes:
+  emotion_dog_postgres:
+  emotion_dog_redis:
+  emotion_dog_weaviate:
+

@@ -1,0 +1,18 @@
+name: Tests
+on: [push, pull_request]
+jobs:
+  unit:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.lock.txt
+      - run: python -m pytest -q
+        env:
+          MODEL_DIR: ${{ runner.temp }}/models
+          LOG_DIR: ${{ runner.temp }}/logs
+          AUDIO_DIR: ${{ runner.temp }}/audio
+
