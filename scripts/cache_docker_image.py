@@ -12,18 +12,22 @@ import os
 from pathlib import Path
 import re
 import shutil
+import subprocess
 import tarfile
 import time
 
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from download_chunks import download_chunks
 
 ROOT = Path(__file__).resolve().parents[3]
 CACHE = ROOT / '04_下载缓存' / 'docker-images'
 
 
 def cache_image(image):
+    if ROOT.drive.upper() == 'C:':
+        raise ValueError('请在 E 盘的项目目录下载镜像')
     if not re.fullmatch(r'[a-z0-9_.-]+(?:/[a-z0-9_.-]+)*:[a-zA-Z0-9_.-]+', image):
         raise ValueError('Expected a Docker Hub repository:tag')
     name, tag = image.rsplit(':', 1)
@@ -92,6 +96,16 @@ def cache_image(image):
         for attempt in range(16):
             try:
                 if not target.exists():
+                    if descriptor['size'] > 50_000_000:
+                        refresh_token()
+                        # Obtain the registry's current redirect with TLS verification;
+                        # registry authorization is not sent to the download helper.
+                        with session.get(registry + '/blobs/' + digest, headers=headers,
+                                         stream=True, timeout=(30, 120)) as response:
+                            response.raise_for_status()
+                            download_url = response.url
+                        download_chunks(download_url, target, digest[7:], descriptor['size'])
+                        continue
                     offset = partial.stat().st_size if partial.exists() else 0
                     refresh_token()
                     request_headers = {**headers, **({'Range': f'bytes={offset}-'} if offset else {})}
@@ -122,7 +136,7 @@ def cache_image(image):
                     raise ValueError('Cached blob is corrupt')
                 print('Verified Docker blob: ' + digest[7:19], flush=True)
                 return target
-            except (requests.RequestException, OSError, ValueError) as e:
+            except (requests.RequestException, OSError, ValueError, subprocess.SubprocessError) as e:
                 print(f'Image retry {image}: {type(e).__name__} ({attempt + 1}/16)', flush=True)
                 time.sleep(min(2 ** attempt, 15))
         raise RuntimeError('Cannot download image layer')

@@ -18,9 +18,9 @@
 
 双击 `启动Dify.cmd`，或执行 `start-dify.ps1`。Dify 页面为 `http://127.0.0.1:8080`，首次初始化路径为 `/install`。
 
-Dify 使用已有的 Ubuntu-24.04 WSL 中的 Docker Engine，虚拟磁盘位于 E 盘。启动脚本保留已安装的镜像，并支持从官方注册表下载、校验及导入离线镜像包，缓存放在 `04_下载缓存/docker-images`。数据库及应用存储使用 Docker 命名卷。Windows Docker Desktop 已安装，但其本体引擎的兼容问题尚未解决，因此本机启动脚本使用 WSL 引擎。
+Dify 使用比赛专用的 `EmotionDogUbuntu` WSL 和 Docker Engine，虚拟磁盘位于 `02_运行环境/wsl`。首次启动可下载安装专用 Ubuntu 和 Docker。启动脚本保留已安装的镜像，并支持从官方注册表下载、校验及导入离线镜像包，缓存放在 `04_下载缓存/docker-images`。数据库及应用存储使用 Docker 命名卷。原有 Ubuntu 虚拟磁盘发生挂载错误，原文件保留。
 
-本机现有下载代理端口为 7897。WSL 通过受限的私有桥接访问该代理和本机模型；模型桥接令牌仅保存在本地 `.env`。首次下载需要网络，已有镜像和模型可复用。分段下载保留续传文件，并在完成后校验官方 SHA256；未完成校验的模型不会登记为可用模型。
+本机现有下载代理端口为 7897。WSL 通过 Windows 启动进程的标准输入输出访问该代理和本机模型。下载目的地限定为上游官方域名，HTTPS 校验保持开启；Ollama 监听 Windows 本机回环地址，Dify 容器通过 Docker 私有桥接地址调用它。首次下载需要网络，已有镜像和模型可复用。分段下载保留续传文件，并在完成后校验官方 SHA256；未完成校验的模型不会登记为可用模型。安装、模型、镜像、音频和下载缓存均指定到 E 盘，Windows 用户目录仅保留少量工具及配置。
 
 ## 交互流程
 
@@ -46,7 +46,9 @@ Dify 使用已有的 Ubuntu-24.04 WSL 中的 Docker Engine，虚拟磁盘位于 
 
 ## 测试与迁移
 
-`python -m pytest -q` 验证签名编码、输入限制、模型动作白名单和跨站请求限制。`python scripts/verify_local.py` 验证下载的真实语音模型、VAD、TTS 和本地模型服务。实体机器狗需要额外现场测试，不包含在离线测试结果中。
+`python -m pytest -q` 验证签名编码、输入限制、模型动作白名单、跨站请求限制及音文图交互接口的衔接。`python scripts/verify_local.py` 验证真实语音模型、VAD、TTS 和本地模型服务，默认不访问机器狗平台。`python scripts/verify_end_to_end.py` 测试运行中的页面后端、真实文字/图像/音频模型及可下载的语音文件。平台恢复后可使用 `python scripts/verify_local.py --with-robot` 单独检查设备查询；播报和动作另需现场测试。
+
+当前交付以代码为主，中移杭研平台联调待平台恢复。实际完成和未完成的项目见 `DEPLOYMENT_STATUS.md`，不要以启动说明替代实测记录。
 
 迁移时保持目录层级，将本仓库放到根目录的 `01_项目代码/emotion_dog`，执行 `setup.ps1`；另从官方仓库取得 Dify 1.17.1 的 docker 目录。设置 `.env` 的模型和日志路径即可换盘。大模型、虚拟环境、赛事资料和密钥均留在本地，不作为 Git 文件上传。
 

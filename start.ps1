@@ -1,6 +1,7 @@
 ﻿$ErrorActionPreference = 'Stop'
 $devProject = $PSScriptRoot
 $devRoot = Split-Path (Split-Path $devProject -Parent) -Parent
+if ([IO.Path]::GetPathRoot($devRoot) -eq 'C:\') { throw '请在 E 盘的项目代码目录运行，避免把运行环境或缓存写入 C 盘' }
 $devPython = Join-Path $devRoot '02_运行环境\venv\Scripts\python.exe'
 $devOllama = Join-Path $devRoot '02_运行环境\Ollama\ollama.exe'
 $devLogs = Join-Path $devRoot '05_日志'
@@ -10,6 +11,7 @@ $env:OLLAMA_HOST = '127.0.0.1:11434'
 $env:OLLAMA_CONTEXT_LENGTH = '4096'
 $env:OLLAMA_NUM_PARALLEL = '1'
 $env:OLLAMA_NO_CLOUD = '1'
+$env:OLLAMA_NOPRUNE = '1'
 $env:TMP = Join-Path $devRoot '04_下载缓存\temp'
 $env:TEMP = $env:TMP
 New-Item -ItemType Directory -Path $env:TEMP -Force | Out-Null

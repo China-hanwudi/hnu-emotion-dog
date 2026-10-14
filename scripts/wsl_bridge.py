@@ -67,7 +67,7 @@ def windows_server(host,proxy_port):
             first=data.split(b'\r\n',1)[0].decode('ascii','replace').split()
             if len(first)<2 or first[0]!='CONNECT':return
             remote=first[1].rsplit(':',1)[0].lower()
-            domains=('docker.io','docker.com','cloudflare.docker.com','github.com','githubusercontent.com','huggingface.co','ollama.com','weaviate.io','quay.io','cloudflarestorage.com')
+            domains=('docker.io','docker.com','cloudflare.docker.com','github.com','githubusercontent.com','huggingface.co','ollama.com','weaviate.io','quay.io','cloudflarestorage.com','ubuntu.com')
             if not any(remote==d or remote.endswith('.'+d) for d in domains):
                 self.request.sendall(b'HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\n\r\n');return
             with socket.create_connection(('127.0.0.1',proxy_port),timeout=15) as conn:

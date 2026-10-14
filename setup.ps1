@@ -1,5 +1,6 @@
 ﻿$ErrorActionPreference = 'Stop'
 $devRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+if ([IO.Path]::GetPathRoot($devRoot) -eq 'C:\') { throw '请在 E 盘的项目代码目录运行，避免把运行环境或缓存写入 C 盘' }
 $devPythonRoot = Join-Path $devRoot '02_运行环境\python'
 $devVenv = Join-Path $devRoot '02_运行环境\venv'
 $devCache = Join-Path $devRoot '04_下载缓存\uv'

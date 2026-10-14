@@ -1,11 +1,14 @@
 """Install verified official images through the existing E-drive WSL runtime."""
 from pathlib import Path
+import os
 import subprocess
+from dotenv import load_dotenv
 from cache_docker_image import cache_image
 
 project = Path(__file__).resolve().parents[1]
 root = project.parents[1]
-wsl = ['wsl', '-d', 'Ubuntu-24.04', '-u', 'root', '--exec']
+load_dotenv(project / '.env')
+wsl = ['wsl', '-d', os.getenv('WSL_DISTRO', 'EmotionDogUbuntu'), '-u', 'root', '--exec']
 def linux_path(path):
     return subprocess.check_output(wsl + ['wslpath', '-a', str(path)],
         text=True, encoding='utf-8', stderr=subprocess.DEVNULL).strip()

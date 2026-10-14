@@ -155,6 +155,10 @@ def download_local_model():
 
     with ThreadPoolExecutor(max_workers=1) as pool:
         list(pool.map(fetch_blob, [manifest['config']] + manifest['layers']))
+    # A separately started Ollama instance may prune unregistered blobs.
+    for layer in [manifest['config']] + manifest['layers']:
+        if not (blob_root / layer['digest'].replace(':', '-')).exists():
+            fetch_blob(layer)
     installed = model_root / 'manifests' / 'registry.ollama.ai' / 'library' / 'qwen3.5' / '4b'
     installed.parent.mkdir(parents=True, exist_ok=True)
     installed.write_bytes(response.content)
@@ -166,6 +170,8 @@ def download_local_model():
     print('Qwen3.5:4b model installed and all hashes verified', flush=True)
 
 def main():
+    if ROOT.drive.upper() == 'C:':
+        raise SystemExit('请在 E 盘的项目目录运行下载，避免将模型和缓存写入 C 盘')
     import argparse
     p = argparse.ArgumentParser()
     p.add_argument('component', choices=['speech', 'ollama', 'model', 'aria2'])

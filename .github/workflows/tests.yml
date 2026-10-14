@@ -10,6 +10,7 @@ jobs:
           python-version: '3.11'
           cache: pip
       - run: pip install -r requirements.lock.txt
+      - run: python -m compileall -q app scripts download_assets.py
       - run: python -m pytest -q
         env:
           MODEL_DIR: ${{ runner.temp }}/models

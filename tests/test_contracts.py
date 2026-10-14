@@ -53,3 +53,52 @@ async def test_signed_client_never_forwards_credentials_on_redirect(monkeypatch)
     assert len(seen)==1
     assert seen[0].headers['VSS-Device-Id']=='d'
 
+def test_turn_combines_modalities_and_returns_playable_audio(monkeypatch):
+    from PIL import Image
+    from app import main as module
+    from app.config import AUDIO_DIR
+    monkeypatch.setenv('ROBOT_ALLOW_PLAYBACK', 'false')
+    seen = []
+    transcript = '这次实验失败让我有些难过。'
+    monkeypatch.setattr(module.speech, 'transcribe', lambda data: {
+        'text': transcript, 'audio_emotion': 'sad', 'speech_detected': True})
+    async def generate(text, emotion, image, history):
+        seen.append((text, emotion, image, list(history)))
+        return {'emotion': 'sad', 'confidence': .8, 'reply': '我在这里听你说。',
+                'evidence': '用户自己的表达', 'action': 'none'}
+    monkeypatch.setattr(module.dialogue, 'generate', generate)
+    audio = io.BytesIO()
+    sf.write(audio, np.zeros(1600, dtype=np.float32), 16000, format='WAV')
+    def synthesize(text):
+        name = 'contract-test.wav'
+        (AUDIO_DIR / name).write_bytes(audio.getvalue())
+        return name
+    monkeypatch.setattr(module.speech, 'synthesize', synthesize)
+    image = io.BytesIO()
+    Image.new('RGB', (32, 32), 'blue').save(image, 'PNG')
+    c = TestClient(app)
+    response = c.post('/api/turn', data={'text': '音频应当优先', 'session_id': 'contract-modalities'},
+                      files={'audio': ('sample.wav', b'controlled-asr-input', 'audio/wav'),
+                             'image': ('sample.png', image.getvalue(), 'image/png')})
+    assert response.status_code == 200
+    result = response.json()
+    assert result['text'] == transcript and result['image_used']
+    assert seen[0][:2] == (transcript, 'sad') and seen[0][2]
+    assert result['robot_playback'] == 'disabled'
+    spoken = c.get(result['audio_url'])
+    assert spoken.status_code == 200 and spoken.content == audio.getvalue()
+    followup = c.post('/api/turn', data={'text': '谢谢', 'session_id': result['session_id']})
+    assert followup.status_code == 200 and not followup.json()['image_used']
+    assert seen[1][2] is None and seen[1][3][0]['content'] == transcript
+    c.delete('/api/session/contract-modalities')
+
+def test_unrecognized_speech_does_not_invoke_model(monkeypatch):
+    from app import main as module
+    monkeypatch.setattr(module.speech, 'transcribe', lambda data: {
+        'text': '', 'audio_emotion': 'unknown', 'speech_detected': False})
+    async def generate(*args):
+        raise AssertionError('Empty speech must not reach the model')
+    monkeypatch.setattr(module.dialogue, 'generate', generate)
+    response = TestClient(app).post('/api/turn', files={'audio': ('silence.wav', b'test', 'audio/wav')})
+    assert response.status_code == 422
+
