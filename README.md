@@ -2,6 +2,8 @@
 
 赛道一情感交互原型。采用官方机器狗平台接口、本地 SenseVoice 中文语音与音频情绪识别、Silero VAD、Ollama 多模态模型和 Windows 中文语音合成。Dify 用 Docker Compose 本地部署，提供可导入的文本共情工作流。
 
+组员后续工作见 [GitHub任务总览与认领入口 #1](https://github.com/China-hanwudi/hnu-emotion-dog/issues/1)，各子任务包含优先级、依赖、代码入口和验收清单。
+
 ## 本机目录与启动
 
 工作目录为 `E:\机械狗比赛开发`：
