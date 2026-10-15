@@ -33,7 +33,8 @@ def cache_image(image):
     name, tag = image.rsplit(':', 1)
     host = 'registry-1.docker.io'
     if name.startswith('cr.weaviate.io/'):
-        host = 'cr.weaviate.io'
+        # The official Weaviate registry challenges against Docker Hub for
+        # this same repository. Use its upstream endpoint to avoid proxy 429s.
         name = name.split('/', 1)[1]
     elif '/' in name and '.' in name.split('/', 1)[0]:
         raise ValueError('Only Docker Hub and the official Weaviate registry are supported')
@@ -136,7 +137,7 @@ def cache_image(image):
                     raise ValueError('Cached blob is corrupt')
                 print('Verified Docker blob: ' + digest[7:19], flush=True)
                 return target
-            except (requests.RequestException, OSError, ValueError, subprocess.SubprocessError) as e:
+            except (requests.RequestException, ValueError, subprocess.SubprocessError) as e:
                 print(f'Image retry {image}: {type(e).__name__} ({attempt + 1}/16)', flush=True)
                 time.sleep(min(2 ** attempt, 15))
         raise RuntimeError('Cannot download image layer')
@@ -152,6 +153,12 @@ def cache_image(image):
     entries = []
     for descriptor, blob, diff_id in zip(manifest['layers'], layers, diff_ids):
         raw = blob.with_suffix('.layer.tar')
+        if raw.exists():
+            with raw.open('rb') as f:
+                valid_raw = 'sha256:' + hashlib.file_digest(f, 'sha256').hexdigest() == diff_id
+            if not valid_raw:
+                raw.replace(directory / (raw.name + '.damaged.' + str(time.time_ns())))
+                print('Damaged extracted layer preserved: ' + diff_id[7:19], flush=True)
         if not raw.exists():
             if descriptor['mediaType'].endswith('+gzip') or descriptor['mediaType'].endswith('.gzip'):
                 with gzip.open(blob, 'rb') as source, raw.open('wb') as target:

@@ -24,7 +24,7 @@ if (-not $devBridgeRunning) {
 }
 $devLinuxProject = (& wsl -d $devDistro -u root --exec wslpath -a $PSScriptRoot | Out-String).Trim()
 $devLinuxDify = (& wsl -d $devDistro -u root --exec wslpath -a $devDify | Out-String).Trim()
-& wsl -d $devDistro -u root --exec sh -c 'command -v docker' | Out-Null
+& wsl -d $devDistro -u root --exec docker compose version 2>$null | Out-Null
 if ($LASTEXITCODE -ne 0) {
     & wsl -d $devDistro -u root --exec sh ($devLinuxProject + '/scripts/setup_wsl_docker.sh') '127.0.0.1'
     if ($LASTEXITCODE -ne 0) { throw 'Docker 安装未完成；可重新启动继续安装' }

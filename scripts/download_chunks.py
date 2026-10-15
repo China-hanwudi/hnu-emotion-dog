@@ -49,7 +49,7 @@ def download_chunks(url: str, target: Path, digest: str, size: int):
                     with chunk.open('rb') as source:
                         verified.write_text(hashlib.file_digest(source, 'sha256').hexdigest())
                     return chunk
-                except (requests.RequestException, OSError, ValueError) as error:
+                except (requests.RequestException, ValueError) as error:
                     print(f'Range retry {target.name[:12]} part {index}: {type(error).__name__}', flush=True)
                     if attempt == 7:
                         raise

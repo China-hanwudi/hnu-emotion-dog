@@ -9,6 +9,7 @@ export DEBIAN_FRONTEND=noninteractive
 # HTTPS repositories use the existing authenticated TLS download path.
 sed -i 's|http://archive.ubuntu.com|https://archive.ubuntu.com|g; s|http://security.ubuntu.com|https://security.ubuntu.com|g' /etc/apt/sources.list.d/ubuntu.sources
 apt-get -o Acquire::Retries=5 -o Acquire::https::Timeout=30 update --error-on=any
+dpkg --configure -a
 apt-get install -y ca-certificates curl python3 iptables
 install -m 0755 -d /etc/apt/keyrings
 curl --fail --retry 5 --location https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
